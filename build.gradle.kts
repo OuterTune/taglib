@@ -28,7 +28,40 @@ android {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+
+        // userdebug is release builds without minify
+        create("userdebug") {
+            initWith(getByName("release"))
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
     }
+    flavorDimensions.add("abi")
+    productFlavors {
+        // universal
+        create("universal") {
+            isDefault = true
+            dimension = "abi"
+            ndk {
+                abiFilters += arrayOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+            }
+        }
+        // arm64 only
+        create("arm64") {
+            dimension = "abi"
+            ndk {
+                abiFilters.add("arm64-v8a")
+            }
+        }
+        // x86_64 only
+        create("x86_64") {
+            dimension = "abi"
+            ndk {
+                abiFilters.add("x86_64")
+            }
+        }
+    }
+
     externalNativeBuild {
         cmake {
             path("src/main/cpp/CMakeLists.txt")
@@ -56,15 +89,3 @@ dependencies {
     androidTestImplementation(libs.androidx.rules)
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            register("mavenRelease", MavenPublication::class) {
-                groupId = "com.kyant"
-                artifactId = "taglib"
-                version = libs.versions.lib.version.get()
-                from(components["release"])
-            }
-        }
-    }
-}
